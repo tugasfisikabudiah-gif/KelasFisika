@@ -20,9 +20,9 @@ kutipan_fisika = [
 st.set_page_config(page_title="Portal KBM FISIKA KELAS XII A-F", page_icon="✨", layout="wide")
 
 # --- 2. KONEKSI SUPABASE ---
-URL = "https://mfgvdmoklecfeeflmynb.supabase.co"
-KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mZ3ZkbW9rbGVjZmVlZmxteW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMjk1MTAsImV4cCI6MjA5MzgwNTUxMH0.oZ-9-VdGbLhNfBA2KAnw_-RGBu4cPI431zWBef8Y4IM"
-supabase: Client = create_client(URL, KEY)
+url = st.secrets["SUPABASE_URL"]
+key = st.secrets["SUPABASE_KEY"]
+supabase = create_client(url, key)
 
 # --- 3. CUSTOM CSS (MERAH PUTIH & KONTRAS) ---
 st.markdown("""
