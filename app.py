@@ -429,29 +429,18 @@ else:
     # --- PORTAL GURU (VERSI FINAL DENGAN ISI LAPORAN DI TABEL) ---
     elif st.session_state.menu_pilihan == 'guru':
         st.markdown("## 🔐 Portal Guru")
-    
-        # --- CSS RESET SPESIFIK INPUT TEXT ---
-        st.markdown("""
-            <style>
-            /* Memaksa elemen input text agar background-nya putih & teksnya kelihatan */
-            .stTextInput input {
-                background-color: #FFFFFF !important;
-                color: #000000 !important;
-                -webkit-text-fill-color: #000000 !important;
-            }
-            .stTextInput div[data-baseweb="input"] {
-                background-color: #FFFFFF !important;
-                border: 2px solid #1A365D !important;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-    
-        kode = st.text_input("Masukkan Kode Rahasia:", type="password")
         
-        if kode == "CERIA2024":
-            import pandas as pd
-            from io import BytesIO
+        with st.form("form_login_guru"):
+            kode = st.text_input("Masukkan Kode Rahasia:", type="password")
+            submit_btn = st.form_submit_button("🔓 Masuk Portal Guru")
     
+        if submit_btn or kode == "CERIA2024":
+            if kode == "CERIA2024":
+                # --- MASUKKAN KODE REKAP GURU BAPAK DI SINI ---
+                st.success("Akses Diterima!")
+            else:
+                st.error("Kode Rahasia Salah!")    
+                
             t1, t2 = st.columns(2)
             t_awal = t1.date_input("Mulai:", datetime.date.today() - datetime.timedelta(days=7))
             t_akhir = t2.date_input("Sampai:", datetime.date.today())
