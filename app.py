@@ -426,26 +426,51 @@ else:
                     help="Klik jika PDF di atas tidak terbuka dengan sempurna di smartphone kamu."
                 )
                 
-    # --- PORTAL GURU (VERSI FINAL DENGAN ISI LAPORAN DI TABEL) ---
+    # --- PORTAL GURU (SOLUSI FIX CSS INPUT & QUERY SUPABASE) ---
     elif st.session_state.menu_pilihan == 'guru':
         st.markdown("## 🔐 Portal Guru")
-        
-        with st.form("form_login_guru"):
-            kode = st.text_input("Masukkan Kode Rahasia:", type="password")
-            submit_btn = st.form_submit_button("🔓 Masuk Portal Guru")
     
-        if submit_btn or kode == "CERIA2024":
-            if kode == "CERIA2024":
-                # --- MASUKKAN KODE REKAP GURU BAPAK DI SINI ---
-                st.success("Akses Diterima!")
-            else:
-                st.error("Kode Rahasia Salah!")    
-                
+        # --- ISOLATED CSS: MENGHILANGKAN BALOK MERAH PADA INPUT PASSWORD ---
+        st.markdown("""
+            <style>
+            /* Netralkan container input BaseUI agar tidak berwarna merah */
+            div[data-baseweb="input"] {
+                background-color: #262730 !important;
+                border: 1px solid #4A5568 !important;
+                border-radius: 8px !important;
+            }
+            /* Hapus warna latar belakang merah pada sub-divisinya */
+            div[data-baseweb="input"] > div {
+                background-color: transparent !important;
+            }
+            /* Pastikan teks ketikan dan ikon mata terlihat jelas */
+            div[data-baseweb="input"] input {
+                background-color: transparent !important;
+                color: #FFFFFF !important;
+                -webkit-text-fill-color: #FFFFFF !important;
+            }
+            /* Khusus tombol utama portal guru */
+            div.stButton > button {
+                background-color: #E53E3E !important;
+                color: white !important;
+                border-radius: 8px !important;
+                border: none !important;
+                font-weight: bold !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+    
+        kode = st.text_input("Masukkan Kode Rahasia:", type="password")
+    
+        if kode == "CERIA2024":
+            import pandas as pd
+            from io import BytesIO
+    
             t1, t2 = st.columns(2)
             t_awal = t1.date_input("Mulai:", datetime.date.today() - datetime.timedelta(days=7))
             t_akhir = t2.date_input("Sampai:", datetime.date.today())
     
-            # 1. Mengambil data dari Supabase dengan penataan filter inner join pada jadwal_kbm
+            # Query Supabase dengan filter inner join tanggal pada jadwal_kbm
             res_data = supabase.table("laporan_kehadiran") \
                 .select("*, jadwal_kbm!inner(nama_kelas, tanggal), progres_kelompok(*)") \
                 .gte("jadwal_kbm.tanggal", t_awal.isoformat()) \
@@ -453,7 +478,7 @@ else:
                 .execute()
     
             if res_data.data:
-                # --- 1. BAGIAN REKAP TABEL UTAMA & EXCEL ---
+                # --- 1. REKAP TABEL UTAMA & EXCEL ---
                 rekap_list = []
                 for r in res_data.data:
                     klp_info = {f"Klp_{i}": "-" for i in range(1, 7)}
@@ -476,11 +501,15 @@ else:
                 df_guru = pd.DataFrame(rekap_list)
                 st.dataframe(df_guru, use_container_width=True, hide_index=True)
     
-                # Ekspor ke Excel
                 buf = BytesIO()
                 with pd.ExcelWriter(buf, engine='openpyxl') as writer:
-                    df_guru.to_excel(writer, index=False, sheet_name="Rekap KBM")
-                st.download_button("📥 Unduh Excel Rekap Komplit", buf.getvalue(), f"Rekap_Fisika_{t_awal}_s_d_{t_akhir}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    df_guru.to_excel(writer, index=False)
+                st.download_button(
+                    "📥 Unduh Excel Rekap Komplit", 
+                    buf.getvalue(), 
+                    f"Rekap_Fisika_{t_awal}_s_d_{t_akhir}.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
     
                 st.divider()
     
@@ -502,7 +531,7 @@ else:
                                 st.write("**📋 Ringkasan Laporan Kelompok:**")
                                 data_tabel = []
                                 progres_list = lap.get('progres_kelompok') or []
-                                
+    
                                 for i in range(1, 7):
                                     progres = next((p for p in progres_list if p.get('nomor_kelompok') == i), None)
                                     if progres:
@@ -524,18 +553,15 @@ else:
                                 st.table(df_st)
     
                             with c2:
-                                # Foto Bukti KBM
                                 if lap.get('foto_kbm_url'):
                                     st.image(lap['foto_kbm_url'], caption=f"Bukti KBM {nama_kelas}", use_container_width=True)
     
-                                # Foto Dokumentasi Kelompok
                                 if progres_list:
                                     st.write("---")
                                     st.write("**📸 Dokumentasi Kelompok:**")
                                     for p in progres_list:
                                         st.markdown(f"**Kelompok {p.get('nomor_kelompok', '-')}** ({p.get('persentase', 0)}%)")
                                         img_col1, img_col2 = st.columns(2)
-                                        
                                         with img_col1:
                                             if p.get('foto_anggota_url'):
                                                 st.image(p['foto_anggota_url'], caption="Anggota")
@@ -545,6 +571,4 @@ else:
                 else:
                     st.info(f"Belum ada laporan masuk untuk hari ini ({today_str}).")
             else:
-                st.warning("Tidak ada data laporan kehadiran yang ditemukan untuk rentang tanggal ini.")
-        elif kode:
-            st.error("Kode Rahasia Salah. Silakan coba lagi!")
+                st.warning("Tidak ada data laporan yang ditemukan untuk rentang tanggal ini.")
