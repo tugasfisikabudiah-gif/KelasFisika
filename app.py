@@ -276,29 +276,43 @@ else:
                     data_kbm = res.data[0]
                     materi = data_kbm['materi']
                     
-                    tab_materi, tab_presensi, tab_progres = st.tabs(["📄 Konten Materi", "🙋 Presensi Kelas", "👥 Progres Kelompok"])
-                    
-                    with tab_materi:
+                    # --- GANTI ST.TABS DENGAN NAVIGASI RESPONSIVE (TIDAK MELIPAT DI HP) ---
+                    menu_portal = st.segmented_control(
+                        "Pilih Menu Portal:",
+                        ["📄 Konten Materi", "🙋 Presensi Kelas", "👥 Progres Kelompok"],
+                        default="📄 Konten Materi",
+                        label_visibility="collapsed"
+                    )
+
+                    st.write("")  # Spasi pemisah tipis
+
+                    # --- TAB 1: KONTEN MATERI ---
+                    if menu_portal == "📄 Konten Materi":
                         st.markdown(f"### {materi['judul']}")
                         st.write(materi['deskripsi'])
+                        
                         if materi.get('url_pdf'):
                             st.write("---")
                             st.markdown("**📂 Modul Pembelajaran / LKPD. Tiap kelompok WAJIB UNDUH & CETAK LKPD ini melalui tombol di bawah:**")
                             emb = materi['url_pdf'].replace("/view", "/preview") if "drive.google.com" in materi['url_pdf'] else materi['url_pdf']
                             st.markdown(f'<iframe src="{emb}" width="100%" height="700" style="border: 2px solid #1A365D; border-radius: 10px;"></iframe>', unsafe_allow_html=True)
                             st.link_button("📂 Unduh LKPD", materi['url_pdf'])
+                            
                         if materi.get('url_video'):
                             st.write("---")
                             tv = materi.get('teks_video', "Video di bawah ini adalah video yang harus kamu simak, Instruksi rinci sudah ada di LKPD ya:")
                             st.markdown(f'<div style="background-color:#fff5f5;padding:15px;border-radius:10px;border-left:5px solid #FF6B6B;"><b>📺 Tonton & Pahami</b><br>{tv}</div>', unsafe_allow_html=True)
-                            for v in materi['url_video'].split(','): st.video(v.strip())
+                            for v in materi['url_video'].split(','): 
+                                st.video(v.strip())
+                                
                         if materi.get('url_simulasi'):
                             st.write("---")
                             ts = materi.get('teks_simulasi', "Gunakan simulasi interaktif di bawah ini untuk mengisi LKPD:")
                             st.markdown(f"<b>🧪 {ts}</b>", unsafe_allow_html=True)
                             st.markdown(f'<iframe src="{materi["url_simulasi"]}" width="100%" height="500" style="border: 2px solid #1A365D; border-radius: 10px;"></iframe>', unsafe_allow_html=True)
-                    
-                    with tab_presensi:
+
+                    # --- TAB 2: PRESENSI KELAS ---
+                    elif menu_portal == "🙋 Presensi Kelas":
                         if tgl_pilihan == datetime.date.today():
                             res_s = supabase.table("siswa").select("nama").eq("nama_kelas", kls_siswa).order("nama").execute()
                             if res_s.data:
@@ -309,7 +323,9 @@ else:
                                         c1, c2 = st.columns([2, 3])
                                         c1.write(s['nama'])
                                         stats[s['nama']] = c2.radio(f"Status_{s['nama']}", ["Hadir", "Sakit", "Izin", "Alpha"], horizontal=True, label_visibility="collapsed", key=f"p_{s['nama']}")
+                                    
                                     foto = st.file_uploader("📸 Foto Bukti Live KBM", type=['jpg', 'png'])
+                                    
                                     if st.form_submit_button("Kirim Presensi Utama"):
                                         if n_pel and foto:
                                             url_f = upload_to_storage(foto, "presensi", kls_siswa)
@@ -317,19 +333,27 @@ else:
                                                 vals = list(stats.values())
                                                 detail_absen = [f"{n} ({s})" for n, s in stats.items() if s != "Hadir"]
                                                 ket_otomatis = ", ".join(detail_absen) if detail_absen else "Semua Hadir"
+                                                
                                                 supabase.table("laporan_kehadiran").insert({
-                                                    "jadwal_id": data_kbm['id'], "nama_pelapor": n_pel,
-                                                    "jml_hadir": vals.count("Hadir"), "jml_sakit": vals.count("Sakit"),
-                                                    "jml_izin": vals.count("Izin"), "jml_alpha": vals.count("Alpha"), 
-                                                    "foto_kbm_url": url_f, "keterangan_absen": ket_otomatis
+                                                    "jadwal_id": data_kbm['id'], 
+                                                    "nama_pelapor": n_pel,
+                                                    "jml_hadir": vals.count("Hadir"), 
+                                                    "jml_sakit": vals.count("Sakit"),
+                                                    "jml_izin": vals.count("Izin"), 
+                                                    "jml_alpha": vals.count("Alpha"), 
+                                                    "foto_kbm_url": url_f, 
+                                                    "keterangan_absen": ket_otomatis
                                                 }).execute()
                                                 st.success("Presensi Berhasil!"); st.balloons()
+                                        else:
+                                            st.error("Wajib mengisi Nama Pelapor dan mengunggah Foto Bukti KBM!")
                         else:
                             st.write("---")
                             st.warning("⚠️ **Akses Terkunci:** Presensi kelas hanya dapat dilakukan pada hari H jadwal KBM.")
                             st.info("Jika ada kendala terkait presensi susulan, silakan hubungi guru pengampu.")
 
-                    with tab_progres:
+                    # --- TAB 3: PROGRES KELOMPOK ---
+                    elif menu_portal == "👥 Progres Kelompok":
                         if tgl_pilihan == datetime.date.today():
                             with st.form("form_progres_siswa"):
                                 ca, cp = st.columns(2)
@@ -338,17 +362,13 @@ else:
                                 cat = st.text_area("Laporan Kerja Kelompok (Sebutkan kendala jika ada)")
                                 
                                 st.write("---")
-                                # INPUT FOTO 1: ANGGOTA
                                 f_anggota = st.file_uploader("📸 1. Foto Anggota Kelompok (Saat mengerjakan LKPD)", type=['jpg', 'png'], help="Pastikan semua anggota yang hadir terlihat di foto")
-                                
-                                # INPUT FOTO 2: LKPD
                                 f_lkpd = st.file_uploader("📸 2. Foto Halaman Terakhir LKPD (Hasil pengerjaan hari ini)", type=['jpg', 'png'], help="Pastikan tulisan terbaca dengan jelas")
                                 
                                 if st.form_submit_button("Simpan Progres"):
                                     check = supabase.table("laporan_kehadiran").select("id").eq("jadwal_id", data_kbm['id']).execute()
                                     
                                     if check.data and f_anggota and f_lkpd:
-                                        # Upload kedua foto
                                         url_anggota = upload_to_storage(f_anggota, "progres", f"K{nk}_{kls_siswa}_ANGGOTA")
                                         url_lkpd = upload_to_storage(f_lkpd, "progres", f"K{nk}_{kls_siswa}_LKPD")
                                         
@@ -358,16 +378,17 @@ else:
                                                 "nomor_kelompok": nk, 
                                                 "capaian_lkpd": cat, 
                                                 "persentase": ps, 
-                                                "foto_progres_url": url_lkpd,       # URL LKPD (untuk dashboard)
-                                                "foto_anggota_url": url_anggota     # Pastikan kolom ini sudah ada di database Supabase Bapak
+                                                "foto_progres_url": url_lkpd, 
+                                                "foto_anggota_url": url_anggota 
                                             }).execute()
                                             st.success(f"Laporan Kelompok {nk} Berhasil Terkirim!"); st.snow()
                                     else:
-                                        st.error("Wajib mengunggah KEDUA FOTO (Anggota & LKPD)")
+                                        st.error("Wajib mengisi Form, mengunggah KEDUA FOTO (Anggota & LKPD), serta memastikan Ketua Kelas sudah mengisi Presensi terlebih dahulu!")
                         else:
                             st.write("---")
                             st.warning("⚠️ **Akses Terkunci:** Pengiriman laporan progres kelompok hanya dibuka pada hari H jadwal KBM.")
                             st.info("Pastikan kelompok kamu mengerjakan tugas sesuai waktu yang telah ditentukan.")
+
                 else:
                     st.write("---")
                     st.warning(f"⚠️ Tidak ada jadwal KBM Fisika untuk kelas **{kls_siswa}** pada tanggal **{tgl_pilihan.strftime('%d %B %Y')}**.")
