@@ -430,22 +430,24 @@ else:
     elif st.session_state.menu_pilihan == 'guru':
         st.markdown("## 🔐 Portal Guru")
     
-        # CSS Khusus untuk Memperbaiki Kolom Input Password (Latar Putih, Teks Gelap & Jelas)
+        # --- CSS RESET SPESIFIK INPUT TEXT ---
         st.markdown("""
             <style>
-            div[data-baseweb="input"] {
+            /* Memaksa elemen input text agar background-nya putih & teksnya kelihatan */
+            .stTextInput input {
+                background-color: #FFFFFF !important;
+                color: #000000 !important;
+                -webkit-text-fill-color: #000000 !important;
+            }
+            .stTextInput div[data-baseweb="input"] {
                 background-color: #FFFFFF !important;
                 border: 2px solid #1A365D !important;
-                border-radius: 8px !important;
-            }
-            div[data-baseweb="input"] input {
-                color: #1A365D !important;
             }
             </style>
         """, unsafe_allow_html=True)
     
         kode = st.text_input("Masukkan Kode Rahasia:", type="password")
-    
+        
         if kode == "CERIA2024":
             import pandas as pd
             from io import BytesIO
