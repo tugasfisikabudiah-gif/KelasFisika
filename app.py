@@ -395,42 +395,42 @@ else:
                     st.info("Silakan cek kembali tanggal yang dipilih atau hubungi Guru jika ada kekeliruan.")
 
         with tab_kalender:  # --- TAB KALENDER (KONTRAS TINGGI) ---
-        st.markdown("### 🗓️ Jadwal Interaktif Fisika XII")
-    
-        calendar_events = [
-            {"title": "MPLS / Orientasi", "start": "2026-07-13", "end": "2026-07-19", "color": "#718096"},
-            {"title": "Bab 1: Listrik Statis", "start": "2026-07-20", "end": "2026-07-26", "color": "#E53E3E"},
-            {"title": "Bab 1: Listrik Dinamis", "start": "2026-07-27", "end": "2026-08-02", "color": "#E53E3E"},
-            {"title": "Bab 1: Proyek Audit Energi", "start": "2026-08-03", "end": "2026-08-09", "color": "#E53E3E"},
-            {"title": "Asesmen Sumatif 1", "start": "2026-08-10", "end": "2026-08-16", "color": "#1A365D"},
-            {"title": "HUT RI (Libur)", "start": "2026-08-17", "end": "2026-08-18", "color": "#718096"},
-            {"title": "Bab 2: Medan Magnet", "start": "2026-08-24", "end": "2026-08-30", "color": "#E53E3E"},
-            {"title": "Bab 2: GGL Induksi", "start": "2026-08-31", "end": "2026-09-06", "color": "#E53E3E"},
-            {"title": "Bab 2: Arus AC & GEM", "start": "2026-09-07", "end": "2026-09-13", "color": "#E53E3E"},
-            {"title": "STS (Tengah Semester)", "start": "2026-09-14", "end": "2026-09-20", "color": "#D69E2E"},
-            {"title": "Asesmen Sumatif 2", "start": "2026-09-21", "end": "2026-09-27", "color": "#1A365D"},
-            {"title": "Pendalaman Ganjil", "start": "2026-10-01", "end": "2026-11-15", "color": "#E53E3E"},
-            {"title": "SAS (Ujian Akhir)", "start": "2026-11-23", "end": "2026-12-06", "color": "#1A365D"},
-            {"title": "Bab 3: Dualisme Gel.", "start": "2027-01-04", "end": "2027-01-10", "color": "#E53E3E"},
-            {"title": "Bab 3: Relativitas", "start": "2027-01-11", "end": "2027-01-17", "color": "#E53E3E"},
-            {"title": "Bab 3: Inti & Radioaktif", "start": "2027-01-18", "end": "2027-01-24", "color": "#E53E3E"},
-            {"title": "Bab 4: Gerbang Logika", "start": "2027-02-01", "end": "2027-02-07", "color": "#E53E3E"},
-            {"title": "Bab 4: Aljabar Boolean", "start": "2027-02-08", "end": "2027-02-14", "color": "#E53E3E"},
-            {"title": "Asesmen Madrasah (AM)", "start": "2027-03-01", "end": "2027-03-14", "color": "#1A365D"},
-        ]
-    
-        calendar_options = {
-            "editable": False,
-            "headerToolbar": {
-                "left": "prev,next today",
-                "center": "title",
-                "right": "dayGridMonth,timeGridWeek"
-            },
-            "initialView": "dayGridMonth"
-        }
-    
-        calendar(events=calendar_events, options=calendar_options, key="kalender_kbm_fix")
-    
+            st.markdown("### 🗓️ Jadwal Interaktif Fisika XII")
+        
+            calendar_events = [
+                {"title": "MPLS / Orientasi", "start": "2026-07-13", "end": "2026-07-19", "color": "#718096"},
+                {"title": "Bab 1: Listrik Statis", "start": "2026-07-20", "end": "2026-07-26", "color": "#E53E3E"},
+                {"title": "Bab 1: Listrik Dinamis", "start": "2026-07-27", "end": "2026-08-02", "color": "#E53E3E"},
+                {"title": "Bab 1: Proyek Audit Energi", "start": "2026-08-03", "end": "2026-08-09", "color": "#E53E3E"},
+                {"title": "Asesmen Sumatif 1", "start": "2026-08-10", "end": "2026-08-16", "color": "#1A365D"},
+                {"title": "HUT RI (Libur)", "start": "2026-08-17", "end": "2026-08-18", "color": "#718096"},
+                {"title": "Bab 2: Medan Magnet", "start": "2026-08-24", "end": "2026-08-30", "color": "#E53E3E"},
+                {"title": "Bab 2: GGL Induksi", "start": "2026-08-31", "end": "2026-09-06", "color": "#E53E3E"},
+                {"title": "Bab 2: Arus AC & GEM", "start": "2026-09-07", "end": "2026-09-13", "color": "#E53E3E"},
+                {"title": "STS (Tengah Semester)", "start": "2026-09-14", "end": "2026-09-20", "color": "#D69E2E"},
+                {"title": "Asesmen Sumatif 2", "start": "2026-09-21", "end": "2026-09-27", "color": "#1A365D"},
+                {"title": "Pendalaman Ganjil", "start": "2026-10-01", "end": "2026-11-15", "color": "#E53E3E"},
+                {"title": "SAS (Ujian Akhir)", "start": "2026-11-23", "end": "2026-12-06", "color": "#1A365D"},
+                {"title": "Bab 3: Dualisme Gel.", "start": "2027-01-04", "end": "2027-01-10", "color": "#E53E3E"},
+                {"title": "Bab 3: Relativitas", "start": "2027-01-11", "end": "2027-01-17", "color": "#E53E3E"},
+                {"title": "Bab 3: Inti & Radioaktif", "start": "2027-01-18", "end": "2027-01-24", "color": "#E53E3E"},
+                {"title": "Bab 4: Gerbang Logika", "start": "2027-02-01", "end": "2027-02-07", "color": "#E53E3E"},
+                {"title": "Bab 4: Aljabar Boolean", "start": "2027-02-08", "end": "2027-02-14", "color": "#E53E3E"},
+                {"title": "Asesmen Madrasah (AM)", "start": "2027-03-01", "end": "2027-03-14", "color": "#1A365D"},
+            ]
+        
+            calendar_options = {
+                "editable": False,
+                "headerToolbar": {
+                    "left": "prev,next today",
+                    "center": "title",
+                    "right": "dayGridMonth,timeGridWeek"
+                },
+                "initialView": "dayGridMonth"
+            }
+        
+            calendar(events=calendar_events, options=calendar_options, key="kalender_kbm_fix")
+        
 # --- PORTAL GURU (VERSI FINAL DENGAN ISI LAPORAN DI TABEL) ---
     elif st.session_state.menu_pilihan == 'guru':
         st.markdown("## 🔐 Portal Guru")
