@@ -426,134 +426,134 @@ else:
                     help="Klik jika PDF di atas tidak terbuka dengan sempurna di smartphone kamu."
                 )
                 
-# --- PORTAL GURU (VERSI FINAL DENGAN ISI LAPORAN DI TABEL) ---
-elif st.session_state.menu_pilihan == 'guru':
-    st.markdown("## 🔐 Portal Guru")
-
-    # CSS Khusus untuk Memperbaiki Kolom Input Password (Latar Putih, Teks Gelap & Jelas)
-    st.markdown("""
-        <style>
-        div[data-baseweb="input"] {
-            background-color: #FFFFFF !important;
-            border: 2px solid #1A365D !important;
-            border-radius: 8px !important;
-        }
-        div[data-baseweb="input"] input {
-            color: #1A365D !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-    kode = st.text_input("Masukkan Kode Rahasia:", type="password")
-
-    if kode == "CERIA2024":
-        import pandas as pd
-        from io import BytesIO
-
-        t1, t2 = st.columns(2)
-        t_awal = t1.date_input("Mulai:", datetime.date.today() - datetime.timedelta(days=7))
-        t_akhir = t2.date_input("Sampai:", datetime.date.today())
-
-        # 1. Mengambil data dari Supabase dengan penataan filter inner join pada jadwal_kbm
-        res_data = supabase.table("laporan_kehadiran") \
-            .select("*, jadwal_kbm!inner(nama_kelas, tanggal), progres_kelompok(*)") \
-            .gte("jadwal_kbm.tanggal", t_awal.isoformat()) \
-            .lte("jadwal_kbm.tanggal", t_akhir.isoformat()) \
-            .execute()
-
-        if res_data.data:
-            # --- 1. BAGIAN REKAP TABEL UTAMA & EXCEL ---
-            rekap_list = []
-            for r in res_data.data:
-                klp_info = {f"Klp_{i}": "-" for i in range(1, 7)}
-                if r.get('progres_kelompok'):
-                    for p in r['progres_kelompok']:
-                        nomor = p.get('nomor_kelompok')
-                        if nomor and 1 <= nomor <= 6:
-                            klp_info[f"Klp_{nomor}"] = f"{p.get('persentase', 0)}% - {p.get('capaian_lkpd', '-')}"
-
-                jadwal = r.get('jadwal_kbm', {})
-                row = {
-                    "Tanggal": jadwal.get('tanggal', '-'),
-                    "Kelas": jadwal.get('nama_kelas', '-'),
-                    "Absen": r.get('keterangan_absen', "-"),
-                    "Pelapor": r.get('nama_pelapor', "-")
-                }
-                row.update(klp_info)
-                rekap_list.append(row)
-
-            df_guru = pd.DataFrame(rekap_list)
-            st.dataframe(df_guru, use_container_width=True, hide_index=True)
-
-            # Ekspor ke Excel
-            buf = BytesIO()
-            with pd.ExcelWriter(buf, engine='openpyxl') as writer:
-                df_guru.to_excel(writer, index=False, sheet_name="Rekap KBM")
-            st.download_button("📥 Unduh Excel Rekap Komplit", buf.getvalue(), f"Rekap_Fisika_{t_awal}_s_d_{t_akhir}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-            st.divider()
-
-            # --- 2. MONITORING VISUAL HARI INI ---
-            st.subheader("🔍 Monitoring Visual Hari Ini")
-            today_str = datetime.date.today().strftime('%Y-%m-%d')
-            data_hari_ini = [r for r in res_data.data if str(r.get('jadwal_kbm', {}).get('tanggal')) == today_str]
-
-            if data_hari_ini:
-                for lap in data_hari_ini:
-                    nama_kelas = lap.get('jadwal_kbm', {}).get('nama_kelas', 'Kelas')
-                    with st.expander(f"📊 LAPORAN: {nama_kelas}", expanded=True):
-                        c1, c2 = st.columns([4, 3])
-
-                        with c1:
-                            st.info(f"**👤 Pelapor:** {lap.get('nama_pelapor', '-')}")
-                            st.error(f"**📝 Rincian Absen:**\n{lap.get('keterangan_absen', 'Semua Hadir')}")
-
-                            st.write("**📋 Ringkasan Laporan Kelompok:**")
-                            data_tabel = []
-                            progres_list = lap.get('progres_kelompok') or []
-                            
-                            for i in range(1, 7):
-                                progres = next((p for p in progres_list if p.get('nomor_kelompok') == i), None)
-                                if progres:
-                                    data_tabel.append({
-                                        "Klp": i,
-                                        "Status": "✅",
-                                        "Progress": f"{progres.get('persentase', 0)}%",
-                                        "Isi Laporan/Catatan": progres.get('capaian_lkpd', '-')
-                                    })
-                                else:
-                                    data_tabel.append({
-                                        "Klp": i, 
-                                        "Status": "❌", 
-                                        "Progress": "0%", 
-                                        "Isi Laporan/Catatan": "Belum Lapor"
-                                    })
-
-                            df_st = pd.DataFrame(data_tabel)
-                            st.table(df_st)
-
-                        with c2:
-                            # Foto Bukti KBM
-                            if lap.get('foto_kbm_url'):
-                                st.image(lap['foto_kbm_url'], caption=f"Bukti KBM {nama_kelas}", use_container_width=True)
-
-                            # Foto Dokumentasi Kelompok
-                            if progres_list:
-                                st.write("---")
-                                st.write("**📸 Dokumentasi Kelompok:**")
-                                for p in progres_list:
-                                    st.markdown(f"**Kelompok {p.get('nomor_kelompok', '-')}** ({p.get('persentase', 0)}%)")
-                                    img_col1, img_col2 = st.columns(2)
-                                    
-                                    with img_col1:
-                                        if p.get('foto_anggota_url'):
-                                            st.image(p['foto_anggota_url'], caption="Anggota")
-                                    with img_col2:
-                                        if p.get('foto_progres_url'):
-                                            st.image(p['foto_progres_url'], caption="Halaman LKPD")
+    # --- PORTAL GURU (VERSI FINAL DENGAN ISI LAPORAN DI TABEL) ---
+    elif st.session_state.menu_pilihan == 'guru':
+        st.markdown("## 🔐 Portal Guru")
+    
+        # CSS Khusus untuk Memperbaiki Kolom Input Password (Latar Putih, Teks Gelap & Jelas)
+        st.markdown("""
+            <style>
+            div[data-baseweb="input"] {
+                background-color: #FFFFFF !important;
+                border: 2px solid #1A365D !important;
+                border-radius: 8px !important;
+            }
+            div[data-baseweb="input"] input {
+                color: #1A365D !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+    
+        kode = st.text_input("Masukkan Kode Rahasia:", type="password")
+    
+        if kode == "CERIA2024":
+            import pandas as pd
+            from io import BytesIO
+    
+            t1, t2 = st.columns(2)
+            t_awal = t1.date_input("Mulai:", datetime.date.today() - datetime.timedelta(days=7))
+            t_akhir = t2.date_input("Sampai:", datetime.date.today())
+    
+            # 1. Mengambil data dari Supabase dengan penataan filter inner join pada jadwal_kbm
+            res_data = supabase.table("laporan_kehadiran") \
+                .select("*, jadwal_kbm!inner(nama_kelas, tanggal), progres_kelompok(*)") \
+                .gte("jadwal_kbm.tanggal", t_awal.isoformat()) \
+                .lte("jadwal_kbm.tanggal", t_akhir.isoformat()) \
+                .execute()
+    
+            if res_data.data:
+                # --- 1. BAGIAN REKAP TABEL UTAMA & EXCEL ---
+                rekap_list = []
+                for r in res_data.data:
+                    klp_info = {f"Klp_{i}": "-" for i in range(1, 7)}
+                    if r.get('progres_kelompok'):
+                        for p in r['progres_kelompok']:
+                            nomor = p.get('nomor_kelompok')
+                            if nomor and 1 <= nomor <= 6:
+                                klp_info[f"Klp_{nomor}"] = f"{p.get('persentase', 0)}% - {p.get('capaian_lkpd', '-')}"
+    
+                    jadwal = r.get('jadwal_kbm', {})
+                    row = {
+                        "Tanggal": jadwal.get('tanggal', '-'),
+                        "Kelas": jadwal.get('nama_kelas', '-'),
+                        "Absen": r.get('keterangan_absen', "-"),
+                        "Pelapor": r.get('nama_pelapor', "-")
+                    }
+                    row.update(klp_info)
+                    rekap_list.append(row)
+    
+                df_guru = pd.DataFrame(rekap_list)
+                st.dataframe(df_guru, use_container_width=True, hide_index=True)
+    
+                # Ekspor ke Excel
+                buf = BytesIO()
+                with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+                    df_guru.to_excel(writer, index=False, sheet_name="Rekap KBM")
+                st.download_button("📥 Unduh Excel Rekap Komplit", buf.getvalue(), f"Rekap_Fisika_{t_awal}_s_d_{t_akhir}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    
+                st.divider()
+    
+                # --- 2. MONITORING VISUAL HARI INI ---
+                st.subheader("🔍 Monitoring Visual Hari Ini")
+                today_str = datetime.date.today().strftime('%Y-%m-%d')
+                data_hari_ini = [r for r in res_data.data if str(r.get('jadwal_kbm', {}).get('tanggal')) == today_str]
+    
+                if data_hari_ini:
+                    for lap in data_hari_ini:
+                        nama_kelas = lap.get('jadwal_kbm', {}).get('nama_kelas', 'Kelas')
+                        with st.expander(f"📊 LAPORAN: {nama_kelas}", expanded=True):
+                            c1, c2 = st.columns([4, 3])
+    
+                            with c1:
+                                st.info(f"**👤 Pelapor:** {lap.get('nama_pelapor', '-')}")
+                                st.error(f"**📝 Rincian Absen:**\n{lap.get('keterangan_absen', 'Semua Hadir')}")
+    
+                                st.write("**📋 Ringkasan Laporan Kelompok:**")
+                                data_tabel = []
+                                progres_list = lap.get('progres_kelompok') or []
+                                
+                                for i in range(1, 7):
+                                    progres = next((p for p in progres_list if p.get('nomor_kelompok') == i), None)
+                                    if progres:
+                                        data_tabel.append({
+                                            "Klp": i,
+                                            "Status": "✅",
+                                            "Progress": f"{progres.get('persentase', 0)}%",
+                                            "Isi Laporan/Catatan": progres.get('capaian_lkpd', '-')
+                                        })
+                                    else:
+                                        data_tabel.append({
+                                            "Klp": i, 
+                                            "Status": "❌", 
+                                            "Progress": "0%", 
+                                            "Isi Laporan/Catatan": "Belum Lapor"
+                                        })
+    
+                                df_st = pd.DataFrame(data_tabel)
+                                st.table(df_st)
+    
+                            with c2:
+                                # Foto Bukti KBM
+                                if lap.get('foto_kbm_url'):
+                                    st.image(lap['foto_kbm_url'], caption=f"Bukti KBM {nama_kelas}", use_container_width=True)
+    
+                                # Foto Dokumentasi Kelompok
+                                if progres_list:
+                                    st.write("---")
+                                    st.write("**📸 Dokumentasi Kelompok:**")
+                                    for p in progres_list:
+                                        st.markdown(f"**Kelompok {p.get('nomor_kelompok', '-')}** ({p.get('persentase', 0)}%)")
+                                        img_col1, img_col2 = st.columns(2)
+                                        
+                                        with img_col1:
+                                            if p.get('foto_anggota_url'):
+                                                st.image(p['foto_anggota_url'], caption="Anggota")
+                                        with img_col2:
+                                            if p.get('foto_progres_url'):
+                                                st.image(p['foto_progres_url'], caption="Halaman LKPD")
+                else:
+                    st.info(f"Belum ada laporan masuk untuk hari ini ({today_str}).")
             else:
-                st.info(f"Belum ada laporan masuk untuk hari ini ({today_str}).")
-        else:
-            st.warning("Tidak ada data laporan kehadiran yang ditemukan untuk rentang tanggal ini.")
-    elif kode:
-        st.error("Kode Rahasia Salah. Silakan coba lagi!")
+                st.warning("Tidak ada data laporan kehadiran yang ditemukan untuk rentang tanggal ini.")
+        elif kode:
+            st.error("Kode Rahasia Salah. Silakan coba lagi!")
